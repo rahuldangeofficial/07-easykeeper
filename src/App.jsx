@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import "./App.css";
 import Note from "./components/Note/Note";
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithRedirect, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import {
   getFirestore,
   collection,
@@ -10,271 +10,207 @@ import {
   doc,
   deleteDoc,
   updateDoc,
+  query,
+  where,
   getDocs,
-  getDoc,
-  setDoc,
 } from "firebase/firestore";
-import "firebase/auth";
-import "firebase/firestore";
 
-// Initialize Firebase
 const firebaseConfig = {
-  apiKey: process.env.VITE_REACT_FIREBASE_API_KEY,
-  authDomain: process.env.VITE_REACT_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.VITE_REACT_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.VITE_REACT_FIREBASE_BUCKET,
-  messagingSenderId: process.env.VITE_REACT_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.VITE_REACT_FIREBASE_APP_ID,
-  measurementId: process.env.VITE_REACT_FIREBASE_MEASUREMENT_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const firestore = getFirestore(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
 function App() {
   const [user, setUser] = useState(null);
-  const [notesList, setNotes] = useState([]);
-  const [noteContent, setNoteContent] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [notes, setNotes] = useState([]);
+  const [noteText, setNoteText] = useState("");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const textareaRef = useRef(null);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        console.log("User is signed in:", user.uid);
-        setUser(user);
-        fetchNotes(user.uid);
-      } else {
-        console.log("User is signed out");
-        setUser(null);
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u);
+      setAuthLoading(false);
+      if (u) loadNotes(u.uid);
+      else {
         setNotes([]);
+        setLoading(false);
       }
     });
-
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
-  const fetchNotes = async (userId) => {
+  const loadNotes = useCallback(async (uid) => {
+    setLoading(true);
     try {
-      const notesRef = collection(firestore, "notes");
-      const querySnapshot = await getDocs(notesRef);
-      const notes = [];
-      querySnapshot.forEach((doc) => {
-        if (doc.data().userId === userId) {
-          notes.push({ id: doc.id, ...doc.data() });
-        }
-      });
-      setNotes(notes);
-    } catch (error) {
-      console.error("Error fetching notes:", error);
+      const q = query(collection(db, "notes"), where("userId", "==", uid));
+      const snap = await getDocs(q);
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      list.sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
+      setNotes(list);
+    } catch (err) {
+      console.error("Load error:", err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const handleCreateInputChange = (event) => {
-    setNoteContent(event.target.value);
-    adjustTextareaHeight();
-  };
+  const filtered = useMemo(() => {
+    if (!search.trim()) return notes;
+    const s = search.toLowerCase();
+    return notes.filter((n) => n.content?.toLowerCase().includes(s));
+  }, [notes, search]);
 
-  const handleSearchInputChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const handleCreateNote = async () => {
-    if (noteContent.trim() !== "") {
-      const newNote = {
-        content: noteContent,
-        dateCreated: new Date().toLocaleString(),
-        lastModified: new Date().toLocaleString(),
-        userId: user.uid,
-      };
-
-      const notesRef = collection(firestore, "notes");
-
-      try {
-        const docRef = await addDoc(notesRef, newNote);
-        const newNoteWithId = { ...newNote, id: docRef.id };
-        setNotes((prevNotes) => [...prevNotes, newNoteWithId]);
-        setNoteContent("");
-        adjustTextareaHeightInstantly();
-      } catch (error) {
-        console.error("Error creating note:", error);
-      }
-    }
-  };
-
-  const saveNotes = async () => {
-    if (user) {
-      const userId = user.uid;
-
-      try {
-        const userDocRef = doc(firestore, "users", userId);
-        await setDoc(userDocRef, {
-          notes: notesList ? notesList : [],
-        });
-      } catch (error) {
-        console.error("Error saving notes:", error);
-      }
-    }
-  };
-
-  const deleteNoteById = async (id) => {
-    try {
-      await deleteDoc(doc(firestore, "notes", id));
-
-      // Remove the deleted note from the local state
-      const newNotes = notesList.filter((note) => note.id !== id);
-      setNotes(newNotes);
-
-      // Update the notes in Firestore
-      await saveNotes(newNotes);
-    } catch (error) {
-      console.error("Error deleting note:", error);
-    }
-  };
-
-  const modifyNoteById = async (id, newContent) => {
-    try {
-      const noteRef = doc(firestore, "notes", id);
-      const noteDoc = await getDoc(noteRef);
-
-      if (noteDoc.exists()) {
-        await updateDoc(noteRef, {
-          content: newContent,
-          lastModified: new Date().toLocaleString(),
-        });
-
-        // Update the note in the local state
-        const updatedNotes = notesList.map((note) => {
-          if (note.id === id) {
-            return {
-              ...note,
-              content: newContent,
-              lastModified: new Date().toLocaleString(),
-            };
-          }
-          return note;
-        });
-        setNotes(updatedNotes);
-
-        // Update the notes in Firestore
-        await saveNotes(updatedNotes);
-      }
-    } catch (error) {
-      console.error("Error modifying note:", error);
-    }
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    handleCreateNote();
-  };
-
-  const adjustTextareaHeight = () => {
+  useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
-  };
+  }, [noteText]);
 
-  const adjustTextareaHeightInstantly = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "40px";
+  const handleCreate = useCallback(async (e) => {
+    e.preventDefault();
+    const text = noteText.trim();
+    if (!text || !user) return;
+
+    setCreating(true);
+    const now = new Date().toLocaleString();
+    const newNote = { content: text, dateCreated: now, lastModified: now, userId: user.uid };
+
+    try {
+      const docRef = await addDoc(collection(db, "notes"), newNote);
+      setNotes((prev) => [{ id: docRef.id, ...newNote }, ...prev]);
+      setNoteText("");
+    } catch (err) {
+      console.error("Create error:", err);
+    } finally {
+      setCreating(false);
     }
-  };
+  }, [noteText, user]);
 
-  const handleSignIn = () => {
-    const provider = new GoogleAuthProvider();
+  const handleDelete = useCallback(async (id) => {
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await deleteDoc(doc(db, "notes", id));
+    } catch (err) {
+      console.error("Delete error:", err);
+      if (user) loadNotes(user.uid);
+    }
+  }, [user, loadNotes]);
 
-    signInWithRedirect(auth, provider)
-      .then((result) => {
-        console.log("User signed in:", result.user.uid);
-        setUser(result.user);
-      })
-      .catch((error) => {
-        console.error("Error signing in:", error);
-      });
-  };
+  const handleModify = useCallback(async (id, content) => {
+    const text = content.trim();
+    if (!text) return;
+    const now = new Date().toLocaleString();
 
-  const handleSignOut = () => {
-    auth
-      .signOut()
-      .then(() => {
-        console.log("User signed out");
-        setUser(null);
-      })
-      .catch((error) => {
-        console.error("Error signing out:", error);
-      });
-  };
+    setNotes((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, content: text, lastModified: now } : n))
+    );
+
+    try {
+      await updateDoc(doc(db, "notes", id), { content: text, lastModified: now });
+    } catch (err) {
+      console.error("Update error:", err);
+      if (user) loadNotes(user.uid);
+    }
+  }, [user, loadNotes]);
+
+  const signIn = useCallback(async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      if (err.code !== "auth/popup-closed-by-user") console.error(err);
+    }
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await auth.signOut();
+    setNotes([]);
+  }, []);
+
+  if (authLoading) {
+    return null;
+  }
 
   return (
     <>
-      <div className="container">
-        <h1 className="header">EasyKeeper</h1>
+      <div className={`header-row ${!user ? 'header-row-centered' : ''}`}>
+        <div className="brand-section">
+          <h1 className="header">EasyKeeper</h1>
+          <span className="author">by @rahuldangeofficial</span>
+        </div>
         {user ? (
-          <button onClick={handleSignOut}>Sign Out</button>
+          <button onClick={signOut}>Sign Out</button>
         ) : (
-          <button onClick={handleSignIn}>Sign In with Google</button>
+          <button onClick={signIn}>Sign In with Google</button>
         )}
       </div>
+
       {user && (
         <>
           <div className="container">
             <input
-              className="search-input"
               type="text"
-              value={searchTerm}
-              onChange={handleSearchInputChange}
+              className="search-input"
               placeholder="Search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="container">
-            <form className="create-card" onSubmit={handleSubmit}>
-              <textarea
-                className="create-content textarea-autogrow"
-                ref={textareaRef}
-                value={noteContent}
-                onChange={handleCreateInputChange}
-                onFocus={adjustTextareaHeight}
-                placeholder="Take a note..."
-              />
 
+          <div className="container">
+            <form className="create-card" onSubmit={handleCreate}>
+              <textarea
+                ref={textareaRef}
+                className="create-content textarea-autogrow"
+                placeholder="Take a note..."
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                disabled={creating}
+              />
               <div className="create-actions">
-                <button type="submit" disabled={!noteContent.trim()}>
-                  Create
+                <button type="submit" disabled={!noteText.trim() || creating}>
+                  {creating ? "Creating..." : "Create"}
                 </button>
               </div>
             </form>
           </div>
+
           <div className="container">
-            {notesList
-              .filter(
-                (note) =>
-                  note.content
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase()) ||
-                  note.dateCreated
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase()) ||
-                  note.lastModified
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase())
-              )
-              .map(({ id, content, dateCreated, lastModified }) => (
-                <Note
-                  key={id}
-                  id={id}
-                  deleteNote={deleteNoteById}
-                  modifyNote={modifyNoteById}
-                  content={content}
-                  dateCreated={dateCreated}
-                  lastModified={lastModified}
-                />
-              ))}
+            <div className="notes-list">
+              {loading ? null : filtered.length === 0 ? (
+                search && <p className="empty-state">No notes found</p>
+              ) : (
+                filtered.map((note) => (
+                  <Note
+                    key={note.id}
+                    id={note.id}
+                    content={note.content}
+                    dateCreated={note.dateCreated}
+                    lastModified={note.lastModified}
+                    onDelete={handleDelete}
+                    onModify={handleModify}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </>
       )}
+
     </>
   );
 }

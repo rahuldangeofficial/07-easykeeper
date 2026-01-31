@@ -1,7 +1,7 @@
 {
-  "name": "easykeeper",
+  "name": "07-easykeeper",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,24 +10,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "dotenv": "^16.3.1",
-    "firebase": "^10.9.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-icons": "^4.10.1",
-    "uuid": "^9.0.0"
+    "firebase": "^11.3.0",
+    "prop-types": "^15.8.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.4.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.14",
-    "@types/react-dom": "^18.2.6",
-    "@vitejs/plugin-react-swc": "^3.3.2",
-    "eslint": "^7.32.0 || ^8.2.0",
-    "eslint-config-airbnb": "^19.0.4",
-    "eslint-plugin-import": "^2.25.3",
-    "eslint-plugin-jsx-a11y": "^6.5.1",
-    "eslint-plugin-react": "^7.28.0",
-    "eslint-plugin-react-hooks": "^4.3.0",
-    "eslint-plugin-react-refresh": "^0.4.1",
-    "vite": "^4.5.5"
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react-swc": "^3.7.2",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.18",
+    "vite": "^6.1.0"
   }
 }

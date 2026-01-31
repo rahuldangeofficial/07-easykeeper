@@ -1,68 +1,114 @@
 # EasyKeeper
 
-EasyKeeper is a note management application that allows users to create, edit, and delete notes easily.
+A simple, elegant note-taking application built with React and Firebase.
 
-### [Visit EasyKeeper](https://easy-keeper.vercel.app/)
+## Preview
 
-## Setup Instructions
+Visit the live app: [easy-keeper.vercel.app](https://easy-keeper.vercel.app/)
 
-Follow the steps below to set up EasyKeeper on your local machine:
+## Features
 
-### Prerequisites
+- Google Authentication
+- Create, edit, and delete notes
+- Real-time sync with Firebase Firestore
+- Search within notes
+- Responsive design
 
-- Node.js (v14 or higher) - Download and install Node.js from the official website: https://nodejs.org
+## Prerequisites
 
-### Installation
+- Node.js v18 or higher
+- Yarn package manager
+- Firebase project with Firestore and Authentication enabled
 
-1. Clone the repository to your local machine:
-     ```
-     git clone https://github.com/rahuldangeofficial/EasyKeeper.git
-     ```
+## Local Development
 
-2. Navigate to the project directory:
-     ```
-     cd EasyKeeper
-     ```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/rahuldangeofficial/EasyKeeper.git
+   cd EasyKeeper
+   ```
 
-3. Install the dependencies using yarn:
-     ```
-     yarn install
-     ```
+2. Create a `.env` file from the template:
+   ```bash
+   cp .env.example .env
+   ```
 
-### Usage
+3. Fill in your Firebase configuration in `.env`
 
-1. Start the development server:
-   
-     ```
-     yarn start
-     ```
+4. Install dependencies and start:
+   ```bash
+   yarn install
+   yarn dev
+   ```
 
-2. Open your web browser and visit `http://localhost:5173`(default) or as shown in terminal log to access EasyKeeper.
+5. Open [http://localhost:5173](http://localhost:5173)
 
-### Building for Production
+## Vercel Deployment
 
-To build EasyKeeper for production, follow these steps:
+### Step 1: Push to GitHub
 
-1. Run the following command:
-    ```
-    yarn build
-    ```
+```bash
+git add .
+git commit -m "Initial commit"
+git push origin main
+```
 
-2. The optimized and minified production-ready files will be generated in the `build` directory.
+### Step 2: Import to Vercel
 
-### Testing
+1. Go to [vercel.com](https://vercel.com)
+2. Click **Add New** → **Project**
+3. Import your GitHub repository
 
-1. To run the test suite, use the following command:
+### Step 3: Configure Environment Variables
 
-    ```
-    yarn test
-    ```
+In Vercel project settings → **Environment Variables**, add:
 
+| Variable | Value |
+|----------|-------|
+| `VITE_FIREBASE_API_KEY` | Your Firebase API key |
+| `VITE_FIREBASE_AUTH_DOMAIN` | your-project.firebaseapp.com |
+| `VITE_FIREBASE_PROJECT_ID` | your-project-id |
+| `VITE_FIREBASE_STORAGE_BUCKET` | your-project.firebasestorage.app |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Your sender ID |
+| `VITE_FIREBASE_APP_ID` | Your app ID |
+| `VITE_FIREBASE_MEASUREMENT_ID` | G-XXXXXXXXXX |
 
-## Contributing
+> **Important**: All environment variables must start with `VITE_` for Vite to expose them to the client.
 
-Contributions are welcome!
+### Step 4: Add Vercel Domain to Firebase
+
+In Firebase Console → **Authentication** → **Settings** → **Authorized domains**:
+- Add your Vercel domain (e.g., `your-app.vercel.app`)
+
+### Step 5: Deploy
+
+Click **Deploy** - Vercel will automatically build and deploy your app.
+
+## Firebase Setup
+
+1. Create a new Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable **Google Authentication** in Authentication → Sign-in method
+3. Create a **Firestore Database** in native mode
+4. Add authorized domains for both `localhost` and your Vercel URL
+5. Set Firestore security rules:
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /{document=**} {
+         allow read, write: if request.auth != null;
+       }
+     }
+   }
+   ```
+
+## Tech Stack
+
+- React 19
+- Vite 6
+- Firebase 11 (Firestore + Auth)
+- CSS3
+
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
-
+MIT License - see [LICENSE](LICENSE) for details.

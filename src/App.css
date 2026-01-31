@@ -2,16 +2,36 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   margin: 0 auto;
   padding: 1rem;
+  width: 100%;
+  max-width: 450px;
 }
 
-.container {
+/* Header Row */
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   margin-bottom: 1rem;
+}
+
+.header-row-centered {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.header-row-centered .brand-section {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
 }
 
 .header {
   font-size: 3rem;
   font-family: "Luckiest Guy";
   color: #fff;
+  margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-shadow: 0px -3px 0 #212121, 0px -3px 0 #212121, 0px 3px 0 #212121,
@@ -24,16 +44,41 @@
     0 12px 12px rgba(0, 0, 0, 0.2), 0 18px 18px rgba(0, 0, 0, 0.15);
 }
 
+.brand-section {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.author {
+  font-size: 0.7rem;
+  color: #fff;
+  font-family: "Mochiy Pop P One", monospace;
+  text-shadow:
+    1px 1px 0 #212121,
+    -1px -1px 0 #212121,
+    1px -1px 0 #212121,
+    -1px 1px 0 #212121,
+    0 2px 0 #212121,
+    0 3px 4px rgba(0, 0, 0, 0.3);
+}
+
+.container {
+  margin-bottom: 1rem;
+}
+
 .search-input {
   border: none;
   border-radius: 8px;
   padding: 1rem;
   background-color: #fff;
-  width: 400px;
-  font-size: 1rem;
+  width: 100%;
+  font-size: 0.8rem;
+  font-family: "Mochiy Pop P One", monospace;
   box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px,
     rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
-  font-family: "Mochiy Pop P One", monospace;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .search-input:focus {
@@ -46,23 +91,23 @@
   margin-bottom: 1rem;
   padding: 1rem;
   background-color: #fff;
-  width: 400px;
+  width: 100%;
+  box-sizing: border-box;
   box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px,
     rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
 }
 
 .create-content {
   width: 100%;
-  font-size: 1rem;
+  font-size: 0.8rem;
+  font-family: "Mochiy Pop P One", monospace;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
-  font: inherit;
   margin-bottom: 0.5rem;
   white-space: pre-wrap;
   word-break: break-word;
   resize: none;
   overflow: hidden;
-  font-family: "Mochiy Pop P One", monospace;
 }
 
 .create-content.textarea-autogrow {
@@ -76,26 +121,61 @@
   overflow: hidden;
 }
 
+.create-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.empty-state,
+.loading-text {
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  padding: 1rem;
+}
+
 /* Mobile Styles */
 @media (max-width: 767px) {
-  .create-card,
-  .search-input {
-    width: 240px;
+  #root {
+    max-width: 280px;
+  }
+
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .brand-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .header {
+    font-size: 2.5rem;
+  }
+
+  .author {
+    font-size: 0.6rem;
   }
 }
 
 /* Tablet Styles */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .create-card,
-  .search-input {
-    width: 700px;
+  #root {
+    max-width: 700px;
   }
 }
 
 /* Desktop Styles */
 @media (min-width: 1024px) {
-  .create-card,
-  .search-input {
-    width: 850px;
+  #root {
+    max-width: 850px;
   }
 }

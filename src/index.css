@@ -1,6 +1,10 @@
 :root {
   font-size: 16px;
-  font-family: "Mochiy Pop P One";
+  font-family: "Mochiy Pop P One", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -9,7 +13,6 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f8f8f8;
   background-color: #fc3153;
 }
 
@@ -21,7 +24,6 @@ button {
   border-width: 0;
   box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px,
     rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #d6d6e7 0 -3px 0 inset;
-  box-sizing: border-box;
   color: #36395a;
   cursor: pointer;
   display: inline-flex;
@@ -29,12 +31,10 @@ button {
   height: 32px;
   justify-content: center;
   line-height: 1;
-  list-style: none;
   overflow: hidden;
   padding-left: 1rem;
   padding-right: 1rem;
   position: relative;
-  text-align: left;
   text-decoration: none;
   transition: box-shadow 0.15s, transform 0.15s;
   user-select: none;
@@ -61,23 +61,13 @@ button:active {
   transform: translateY(2px);
 }
 
-/* Mobile Styles */
-@media (max-width: 767px) {
-  body {
-    font-size: 0.8rem;
-  }
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-/* Tablet Styles */
-@media (min-width: 768px) and (max-width: 1023px) {
-  body {
-    font-size: 0.8rem;
-  }
-}
-
-/* Desktop Styles */
-@media (min-width: 1024px) {
-  body {
-    font-size: 1rem;
-  }
+input,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
 }
