@@ -4,6 +4,8 @@ A note-taking app with Google Sign-In and cloud sync.
 
 ## Preview
 
+![EasyKeeper Preview](assets/preview.png)
+
 [easykeeper.vercel.app](https://easykeeper.vercel.app/)
 
 ## Setup
